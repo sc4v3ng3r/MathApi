@@ -5,7 +5,7 @@
 #include "OrderedPair.h"
 
 #define BISSECTION_PRINT printf("K\t    AN\t          BN\t           XN\t           F(XN)\t        E\n");
-
+#define SECANT_PRINT printf("K\t    X0\t          X1\t           F(X0)\t   F(X1)\t    Xn\t          F(Xn)\n");
 typedef enum Operation {JACOBI=1, BISSECTION=2, SECANT=3 }Operation;
 
 typedef struct ResultsTable{

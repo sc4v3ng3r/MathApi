@@ -22,10 +22,7 @@ void PolynomialResultsAddData(PolynomialResultsTable* table,const OrderedPair pa
       table->m_results[i].m_data = NULL;
     
     puts("New 10 alocation\n");*/
-  }
-  
-  //printf("Table 0x%x Runner 0x%x \n", table->m_results, table->m_runner);
-  
+  } 
   ResultsTableAddData(table->m_runner,iteration,pair, data, error, op);
   
   table->m_total+=1;
@@ -68,11 +65,14 @@ void PolynomialResultsTableShow(const PolynomialResultsTable* table)
       BISSECTION_PRINT
       for(i=0; i < table->m_total; i++)
 	ResultsTableShow(&table->m_results[i]);
-      printf("\nTotal iterations: %lu\nMax iterations: %lu\n"
-	     "Root founded: %lf \n", table->m_total, table->m_size,*table->m_root);
+      printf("\nTotal iterations: %lu\nMax iterations: %lu\nRoot founded: %lf\n",
+	     table->m_total, table->m_size,*table->m_root);
       break;
       
     case SECANT:
+      SECANT_PRINT
+      for(i=0; i < table->m_total; i++)
+	ResultsTableShow(&table->m_results[i]);
       break;
   }
   return;

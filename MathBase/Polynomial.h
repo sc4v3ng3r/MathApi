@@ -14,5 +14,6 @@ Polynomial * PolynomialDelete(Polynomial* pol);
 
 void PolynomialShow(const Polynomial* pol);
 void PolynomialSetConstants(Polynomial* pol, ...);
+void PolynomialSetConstantsAndDegree(Polynomial* pol, uint degree, ...);
 double PolynomialFx(const Polynomial* pol, const double x);
 #endif

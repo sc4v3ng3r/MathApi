@@ -1,5 +1,5 @@
 #include "ResultsTable.h"
-
+#define RESULTS_TABLE_ADD_ERROR printf("ResultsTableAddData ERROR %s\n", strerror(errno));
 ResultsTable* ResultsTableInit()
 {
   ulong i;
@@ -22,7 +22,6 @@ void ResultsTableShow(const ResultsTable* table)
   switch(table->m_lastOperation){
     
     case JACOBI:
-      
       break;
       
     case BISSECTION:
@@ -31,7 +30,8 @@ void ResultsTableShow(const ResultsTable* table)
       break;
       
     case SECANT:
-      
+      printf("%lu\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",table->m_iterator,table->m_pair.m_x,
+	     table->m_pair.m_y, table->m_data[0], table->m_data[1],table->m_data[2],table->m_data[3]);
       break;
       
     default:
@@ -44,7 +44,8 @@ void ResultsTableShow(const ResultsTable* table)
 void ResultsTableAddData(ResultsTable* table, const uint iterator,const OrderedPair pair,
 			 const double* data, const double error, const Operation operation)
 {
-  table->m_pair = pair;
+  table->m_pair.m_x = pair.m_x;
+  table->m_pair.m_y = pair.m_y;
   table->m_iterator = iterator;
   table->m_error = error;
   table->m_lastOperation = operation;
@@ -53,7 +54,7 @@ void ResultsTableAddData(ResultsTable* table, const uint iterator,const OrderedP
     case BISSECTION:
       table->m_data = (double*) malloc(2*sizeof(double));
       if (!table->m_data){
-	printf("ResultsTableAddData ERROR %s\n", strerror(errno));
+	RESULTS_TABLE_ADD_ERROR
 	break;
       }
       memcpy(table->m_data,data,2*sizeof(double));
@@ -63,6 +64,13 @@ void ResultsTableAddData(ResultsTable* table, const uint iterator,const OrderedP
       break;
       
     case SECANT:
+      table->m_data = (double*) malloc(4*sizeof(double));
+      if (!table->m_data){
+	RESULTS_TABLE_ADD_ERROR
+	break;
+      }
+      
+      memcpy(table->m_data, data, 4*sizeof(double));
       break;
   }
   return;

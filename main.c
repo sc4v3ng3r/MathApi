@@ -59,13 +59,27 @@ int main(){
   
   //printf("%lu %lf\n",table->m_results->m_iterator, table->m_results[1].m_data[1]);
   if (table){
-    puts("\n\n\n");
+    puts("\n Bissecao \n\n");
     PolynomialResultsTableShow(table);
     PolynomialResultsTableDelete(table);
   }
   
+  Polynomial *pol2 = PolynomialInit(3);
+  PolynomialSetConstants(pol2,1.0,0.0,(-9.0),3.0);
+  
+  PolynomialShow(pol2);
+  pair->m_x = 0;
+  pair->m_y = 1;
+  
+  table = PolynomialRootSecant(pol2, pair , 10, 0.0005);
+  puts("\n SECANTE \n\n");
+  PolynomialResultsTableShow(table);
+  printf("\nRoot founded is: %lf\n", *table->m_root);
+  
+  PolynomialResultsTableDelete(table);
   PolynomialShow(pol);
   PolynomialDelete(pol);
   free(pair);
+  PolynomialDelete(pol2);
   return 0;
 }

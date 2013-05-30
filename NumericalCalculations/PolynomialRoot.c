@@ -72,18 +72,24 @@ static BOOL PolynomialRootIntervalValidador(const Polynomial* pol, const Ordered
 PolynomialResultsTable* PolynomialRootSecant(const Polynomial* pol, const OrderedPair* interval,
 					     const uint iterators, const double precision)
 {
-  PolynomialResultsTable *table = PolynomialResultsTableInit(iterators);
+  ulong i;
+  double Xn, pt1, pt2, pt3, *data;
   OrderedPair pair;
+  
+  PolynomialResultsTable *table = PolynomialResultsTableInit(iterators);
+  if (!table)
+    return NULL;
   
   pair.m_x = interval->m_x;
   pair.m_y = interval->m_y;
   
-  ulong i;
-  double Xn, pt1, pt2, pt3;
-  
-  printf("\nK\t    x0\t           x1\t          Fx(x0)\t   Fx(x1)\t    Xn\t         Fx(Xn)\n");
+  data = (double*) malloc(4*sizeof(double));
+  if (!data)
+    return NULL;
   
   for(i=0; i < iterators; i++){
+    data[0] = PolynomialFx(pol,pair.m_x); // F(x0)
+    data[1] = PolynomialFx(pol,pair.m_y); // F(x1)
     
     pt1 = pair.m_x * PolynomialFx(pol, pair.m_y);
     pt2 = pair.m_y * PolynomialFx(pol, pair.m_x);
@@ -92,18 +98,10 @@ PolynomialResultsTable* PolynomialRootSecant(const Polynomial* pol, const Ordere
     
     pt3 = PolynomialFx(pol,pair.m_y) - PolynomialFx(pol, pair.m_x); // DENOMINADOR!
     Xn = pt1 / pt3;
+    data[2] = Xn;
+    data[3] = PolynomialFx(pol,Xn);
     
-    /*
-    // i x0 x1 Fx(x0) Fx(x1) Xn Fx(Xn) 
-    printf("%u\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\n", i,pol->m_interval[0],pol->m_interval[1],
-	   Fx(pol,pol->m_interval[0]), Fx(pol,pol->m_interval[1]),Xn,Fx(pol,Xn));
-    */
-    //printf(" Xn = %lf, Fx(%lf) = %lf\n", Xn, Xn, Fx(pol, Xn));
-    
-    printf("%lu\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\n", i,pair.m_x, pair.m_y,
-	   PolynomialFx(pol, pair.m_x), PolynomialFx(pol, pair.m_y),Xn,
-	   PolynomialFx(pol,Xn));
-    
+    PolynomialResultsAddData(table, pair, data, 0,i,SECANT);
     pt3 = PolynomialFx(pol,Xn);
     
     if (pt3 < 0)
@@ -115,7 +113,6 @@ PolynomialResultsTable* PolynomialRootSecant(const Polynomial* pol, const Ordere
     pair.m_x = pair.m_y;
     pair.m_y = Xn;
   }
-  
-  printf("Solucao: X = %.6lf\n", Xn);
+  table->m_root = &table->m_results[table->m_total-1].m_data[2];
   return table;
 }

@@ -83,15 +83,31 @@ void PolynomialSetConstants(Polynomial* pol, ...)
   va_list argPtr;
   va_start(argPtr, 0);
   uint i;
-  double data;
   
   if (!pol)
     return;
   
   for(i=0; i < (pol->m_degree+1); i++)
-    pol->m_data[i] = va_arg(argPtr,double);
+    pol->m_data[i] = va_arg(argPtr, double);
   
   va_end(argPtr);
   return;
 }
 
+void PolynomialSetConstantsAndDegree(Polynomial* pol, uint degree, ... )
+{
+  va_list argPtr;
+  uint i;
+  va_start(argPtr,0);
+  if (!pol)
+    return;
+  
+  pol->m_degree = degree;
+  free(pol->m_data);
+  
+  for(i=0; i < (degree+1); i++)
+   pol->m_data[i] = va_arg(argPtr, double);
+  
+  va_end(argPtr);
+  return;
+}
