@@ -2,45 +2,60 @@
 
 #define DEFAULT_SIZE 10
 
-void PolynomialResultsAddData(PolynomialResultsTable* table, const double an, const double bn, 
-			      const double xn, const double fxn, const double error, const uint iteration)
+void PolynomialResultsAddData(PolynomialResultsTable* table,const OrderedPair pair,const double* data,
+			      const double error, const uint iteration, Operation op)
 {
+  ulong i;
   
   if (!table)
     return;
   
+  //printf("Table 0x%x Runner 0x%x  bound is : 0x%x\n", table->m_results, table->m_runner, (table->m_results+table->m_size));
+  
   if (table->m_runner == (table->m_results+table->m_size) ){
-    table->m_results = realloc(table->m_results, DEFAULT_SIZE * sizeof(ResultsInfo));
+    return;
+    /*
+    table->m_results = (ResultsTable*)realloc(table->m_results, 10*sizeof(ResultsTable));
+    
     table->m_size+=10;
+    for(i=table->m_total; i < table->m_size; i++)
+      table->m_results[i].m_data = NULL;
+    
+    puts("New 10 alocation\n");*/
   }
   
+  //printf("Table 0x%x Runner 0x%x \n", table->m_results, table->m_runner);
+  
+  ResultsTableAddData(table->m_runner,iteration,pair, data, error, op);
+  
   table->m_total+=1;
-  table->m_runner->m_interval.m_x = an;
-  table->m_runner->m_interval.m_y = bn;
-  table->m_runner->m_xn = xn;
-  table->m_runner->m_fxn = fxn;
-  table->m_runner->m_error = error;
-  table->m_runner->m_iteration = iteration;
   table->m_runner++;
   return;
 }
 
-PolynomialResultsTable* PolynomialResultsTableInit()
+PolynomialResultsTable* PolynomialResultsTableInit(const ulong maxResults)
 {
   PolynomialResultsTable *table = (PolynomialResultsTable*) malloc(sizeof(PolynomialResultsTable));
-  if (!table)
+  if (!table){
+    printf("PolynomialResultsTableInit ERROR %s\n", strerror(errno));
     return NULL;
+  }
   
   table->m_total = 0;
-  table->m_results = (ResultsInfo *) malloc(DEFAULT_SIZE *sizeof(ResultsInfo));
+  //   WARNING ALTERNATIVE SOLUTION, REPAIR THE REALLOC PROBLEM IN ResultsTable
+  //table->m_results = ResultsTableInit();
   
-  if (!table->m_results){
+  table->m_results = (ResultsTable*) malloc(maxResults* sizeof(ResultsTable));
+   if (!table->m_results){
     free(table);
     return NULL;
   }
   
   table->m_runner = table->m_results;
-  table->m_size = 10;
+  ulong i; for(i=0; i < maxResults; i++) table->m_results[i].m_data = NULL;
+  // END OF ALTERNATIVE SOLUTION
+  
+  table->m_size = maxResults;
   return table;
 }
 
@@ -48,19 +63,32 @@ void PolynomialResultsTableShow(const PolynomialResultsTable* table)
 {
   ulong i;
   
-  for(i=0; i < table->m_total; i++)
-    printf("%lu\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t\n", table->m_results[i].m_iteration,
-	   table->m_results[i].m_interval.m_x, table->m_results[i].m_interval.m_y,
-	   table->m_results[i].m_xn, table->m_results[i].m_fxn, table->m_results[i].m_error);
-
+  switch(table->m_results->m_lastOperation){
+    case BISSECTION:
+      printf("   K\t    AN\t          BN\t           XN\t           F(XN)\t        E\n");
+      for(i=0; i < table->m_total; i++){
+	printf("%lu\t %lf\t %lf\t %lf\t %lf\t %lf\n",table->m_results[i].m_iterator,table->m_results[i].m_pair.m_x,
+	  table->m_results[i].m_pair.m_y, table->m_results[i].m_data[0], table->m_results[i].m_data[1],
+	  table->m_results[i].m_error);
+      }
+      
+    case SECANT:
+      break;
+  }
   return;
 }
 
 void PolynomialResultsTableDelete(PolynomialResultsTable* table)
 {
-  free(table->m_results);
-  table->m_results = NULL;
-  table->m_runner = NULL;
+  ulong i;
+  
+  for(i=0; i < table->m_size; i++){
+   // printf("PolynomialResultsTableDelete clear 0x%x\n", &table->m_results[i]);
+    free(table->m_results[i].m_data);
+    table->m_results[i].m_data = NULL;
+  }
+  
+  ResultsTableDelete(table->m_results);
   free(table);
   table = NULL;
 }

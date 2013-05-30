@@ -3,19 +3,19 @@
 static BOOL PolynomialRootIntervalValidador(const Polynomial *pol, const OrderedPair* interval);
 
 PolynomialResultsTable * PolynomialRootBissection(const Polynomial* pol, const OrderedPair* interval,
-			      const uint iterators, const double precision)
+						  const uint iterators, const double precision)
 {
   ulong i;
-  double Xi, value, interA, interB, choosed, fa,fb,fxi;
+  double error, *data;
+  OrderedPair pair;
   
-  PolynomialResultsTable *table = PolynomialResultsTableInit();
-  /*
-  if (PolynomialRootIntervalValidador(pol, interval)){
+  PolynomialResultsTable *table = PolynomialResultsTableInit(iterators);
+  
+  if (!PolynomialRootIntervalValidador(pol, interval)){
     printf("PolynomialRootBissection [ERROR] BAD INTERVAL %lf %lf\n", interval->m_x, interval->m_y);
     return NULL;
-  }*/
+  }
   
-  printf("PolynomialRootBissection OK!\n");
   double err = (interval->m_y - interval->m_x);
   if (err < 0)
     err*=-1;
@@ -25,53 +25,97 @@ PolynomialResultsTable * PolynomialRootBissection(const Polynomial* pol, const O
     // ENcontrar qualquer X para EM [a,b];
   }
   
+  pair.m_x = interval->m_x;
+  pair.m_y = interval->m_y;
+  
+  data = (double *) malloc (2*sizeof(double));
+  
   //printf(" K\t    AN\t          BN\t           XN\t           F(XN)\t        E\n");
-  interA = interval->m_x;
-  interB = interval->m_y;
   
   for(i=0; i < iterators; i++){
-    Xi = (interA + interB)/2;
     
-    fa = PolynomialFx(pol,interA);
-    fb = PolynomialFx(pol,interB);
-    fxi = PolynomialFx(pol,Xi);
+    data[0] = (pair.m_x + pair.m_y) / 2; // F(xi)
+    data[1] = PolynomialFx(pol,data[0]); // F(xi)
     
     // sessao de testes e definicoes
-    value = (Xi - interB); // value is error!
-    if (value < 0)
-      value*=-1;
+    error = (data[0] - pair.m_y); // value is error!
+    if (error < 0)
+      error*=-1;
+       
+    PolynomialResultsAddData(table, pair, data, error, i, BISSECTION);
     
-    printf("add | %lu %lf %lf %lf %lf %lf\n", i, interA,interB, Xi, fxi, value);
-    PolynomialResultsAddData(table,interA,interB,Xi,fxi,value,i);
+    if (PolynomialFx(pol,pair.m_x) * data[1] > 0)
+      pair.m_x = data[0];
     
-    if (fa * fxi > 0)
-      interA = Xi;
-    
-    else interB = Xi;
+    else pair.m_y = data[0];
     
     // final da sessao de testes de definicoes
-    // iteracao,IterA, InterB, InterN, FX(IterN), (b-a)
-    //printf(" %d\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\n",i,interA,interB,Xi,fxi, value);
-    if (value < precision)
+    if (error < precision)
       break;
   }
   
+  table->m_root = &table->m_results[table->m_total-1].m_data[0];
   return table;
   //SYSTEM_PAUSE
 }
 
 static BOOL PolynomialRootIntervalValidador(const Polynomial* pol, const OrderedPair* interval)
 {
-  if ( ( (PolynomialFx(pol,interval->m_x)) * (PolynomialFx(pol,interval->m_y)) ) < 0 )
-    return 1;
   
-  return 0;
+  if ( ( (PolynomialFx(pol,interval->m_x)) * (PolynomialFx(pol,interval->m_y)) ) < 0 )
+    return TRUE;
+  
+  return FALSE;
 }
 
+// WARNING I AM WORKING HERE!
 PolynomialResultsTable* PolynomialRootSecant(const Polynomial* pol, const OrderedPair* interval,
 					     const uint iterators, const double precision)
 {
-  PolynomialResultsTable *table;
+  PolynomialResultsTable *table = PolynomialResultsTableInit(iterators);
+  OrderedPair pair;
   
+  pair.m_x = interval->m_x;
+  pair.m_y = interval->m_y;
+  
+  ulong i;
+  double Xn, pt1, pt2, pt3;
+  
+  printf("\nK\t    x0\t           x1\t          Fx(x0)\t   Fx(x1)\t    Xn\t         Fx(Xn)\n");
+  
+  for(i=0; i < iterators; i++){
+    
+    pt1 = pair.m_x * PolynomialFx(pol, pair.m_y);
+    pt2 = pair.m_y * PolynomialFx(pol, pair.m_x);
+    
+    pt1 = pt1-pt2; // NUMERADOR
+    
+    pt3 = PolynomialFx(pol,pair.m_y) - PolynomialFx(pol, pair.m_x); // DENOMINADOR!
+    Xn = pt1 / pt3;
+    
+    /*
+    // i x0 x1 Fx(x0) Fx(x1) Xn Fx(Xn) 
+    printf("%u\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\n", i,pol->m_interval[0],pol->m_interval[1],
+	   Fx(pol,pol->m_interval[0]), Fx(pol,pol->m_interval[1]),Xn,Fx(pol,Xn));
+    */
+    //printf(" Xn = %lf, Fx(%lf) = %lf\n", Xn, Xn, Fx(pol, Xn));
+    
+    printf("%u\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\n", i,pair.m_x, pair.m_y,
+	   PolynomialFx(pol, pair.m_x), PolynomialFx(pol, pair.m_y),Xn,
+	   PolynomialFx(pol,Xn));
+    
+    pt3 = PolynomialFx(pol,Xn);
+    
+    if (pt3 < 0)
+      pt3*=-1;
+    
+    if ( pt3 < precision)
+      break;
+    
+    pair.m_x = pair.m_y;
+    pair.m_y = Xn;
+  }
+  
+  printf("Solucao: X = %.6lf\n", Xn);
   return table;
 }
