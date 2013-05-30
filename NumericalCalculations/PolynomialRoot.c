@@ -11,6 +11,9 @@ PolynomialResultsTable * PolynomialRootBissection(const Polynomial* pol, const O
   
   PolynomialResultsTable *table = PolynomialResultsTableInit(iterators);
   
+  if (!table)
+    return NULL;
+  
   if (!PolynomialRootIntervalValidador(pol, interval)){
     printf("PolynomialRootBissection [ERROR] BAD INTERVAL %lf %lf\n", interval->m_x, interval->m_y);
     return NULL;
@@ -30,15 +33,12 @@ PolynomialResultsTable * PolynomialRootBissection(const Polynomial* pol, const O
   
   data = (double *) malloc (2*sizeof(double));
   
-  //printf(" K\t    AN\t          BN\t           XN\t           F(XN)\t        E\n");
-  
   for(i=0; i < iterators; i++){
     
-    data[0] = (pair.m_x + pair.m_y) / 2; // F(xi)
+    data[0] = (pair.m_x + pair.m_y) / 2; // Xi
     data[1] = PolynomialFx(pol,data[0]); // F(xi)
     
-    // sessao de testes e definicoes
-    error = (data[0] - pair.m_y); // value is error!
+    error = (data[0] - pair.m_y);
     if (error < 0)
       error*=-1;
        
@@ -100,7 +100,7 @@ PolynomialResultsTable* PolynomialRootSecant(const Polynomial* pol, const Ordere
     */
     //printf(" Xn = %lf, Fx(%lf) = %lf\n", Xn, Xn, Fx(pol, Xn));
     
-    printf("%u\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\n", i,pair.m_x, pair.m_y,
+    printf("%lu\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\t%.6lf\n", i,pair.m_x, pair.m_y,
 	   PolynomialFx(pol, pair.m_x), PolynomialFx(pol, pair.m_y),Xn,
 	   PolynomialFx(pol,Xn));
     

@@ -38,7 +38,7 @@ LinearSystem* LinearSystemInit(const Matrix* matrix, BOOL vectorIndependent)
 	linearSystem->m_systemMatrix->m_data[i] = realloc(linearSystem->m_systemMatrix->m_data[i],
 							  ((matrix->m_columns+1) * sizeof(double)));
 	linearSystem->m_systemMatrix->m_columns+=1;
-    } 
+    }
     else {
       linearSystem->m_systemMatrix = MatrixCopy(matrix);
       linearSystem->m_systemMatrix->m_type = SQUARE;

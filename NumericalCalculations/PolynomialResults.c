@@ -65,12 +65,12 @@ void PolynomialResultsTableShow(const PolynomialResultsTable* table)
   
   switch(table->m_results->m_lastOperation){
     case BISSECTION:
-      printf("   K\t    AN\t          BN\t           XN\t           F(XN)\t        E\n");
-      for(i=0; i < table->m_total; i++){
-	printf("%lu\t %lf\t %lf\t %lf\t %lf\t %lf\n",table->m_results[i].m_iterator,table->m_results[i].m_pair.m_x,
-	  table->m_results[i].m_pair.m_y, table->m_results[i].m_data[0], table->m_results[i].m_data[1],
-	  table->m_results[i].m_error);
-      }
+      BISSECTION_PRINT
+      for(i=0; i < table->m_total; i++)
+	ResultsTableShow(&table->m_results[i]);
+      printf("\nTotal iterations: %lu\nMax iterations: %lu\n"
+	     "Root founded: %lf \n", table->m_total, table->m_size,*table->m_root);
+      break;
       
     case SECANT:
       break;

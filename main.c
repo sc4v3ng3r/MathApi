@@ -61,7 +61,6 @@ int main(){
   if (table){
     puts("\n\n\n");
     PolynomialResultsTableShow(table);
-    printf("\nRoot is: %lf \n", *table->m_root);
     PolynomialResultsTableDelete(table);
   }
   

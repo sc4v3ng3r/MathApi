@@ -26,7 +26,8 @@ void ResultsTableShow(const ResultsTable* table)
       break;
       
     case BISSECTION:
-      
+      printf("%lu\t %lf\t %lf\t %lf\t %lf\t %lf\n",table->m_iterator,table->m_pair.m_x, table->m_pair.m_y,
+	     table->m_data[0], table->m_data[1], table->m_error); 
       break;
       
     case SECANT:
