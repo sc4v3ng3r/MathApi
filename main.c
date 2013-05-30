@@ -3,6 +3,10 @@
 #include "./NumericalCalculations/PolynomialRoot.h"
 #include "./NumericalCalculations/PolynomialResults.h"
 
+/* this method main is only for test
+ * 
+ */
+
 int main(){
   ulong i,j;
   
@@ -14,7 +18,7 @@ int main(){
     for(j=0; j < matrix->m_columns; j++)
       matrix->m_data[i][j] = (3.14 * (i+(j+1)) * 2) / 10;
     */
-  
+  // ONLY TEST ---------
   matrix->m_data[0][0] = 1;
   matrix->m_data[0][1] = 1;
   matrix->m_data[0][2] = 2;
@@ -29,7 +33,7 @@ int main(){
   matrix->m_data[2][1] = 6;
   matrix->m_data[2][2] = -5;
   matrix->m_data[2][3] = 0;
-  
+//   -----------------------
   
   MatrixShow(matrix);
   system = LinearSystemInit(matrix, TRUE);
@@ -41,20 +45,23 @@ int main(){
   MatrixShow(system->m_systemMatrix);
   LinearSystemGaussJordan(system);
   MatrixShow(system->m_solutionMatrix);
-  
   LinearSystemDelete(system);
   
-  Polynomial *pol = PolynomialInit(3);
-  PolynomialSetConstants(pol, 1.0, 0,-9.0, 3.0);
+  Polynomial *pol = PolynomialInit(2);
+  PolynomialSetConstants(pol, 1.0, 0.0,-3.0);
+  
   OrderedPair *pair = (OrderedPair*) malloc(sizeof(OrderedPair));
-  pair->m_x = 0.0;
-  pair->m_y = 1.0;
+  pair->m_x = 1;
+  pair->m_y = 2;
   
   printf("Intervals %lf %lf\n", pair->m_x, pair->m_y);
-  PolynomialResultsTable *table = PolynomialRootBissection(pol,pair,10,0.002);
+  PolynomialResultsTable *table = PolynomialRootBissection(pol,pair,10,0.01);
   
+  //printf("%lu %lf\n",table->m_results->m_iterator, table->m_results[1].m_data[1]);
   if (table){
-    printf("%lu %lu\n", table->m_size, table->m_total);//  PolynomialResultsTableShow(table);
+    puts("\n\n\n");
+    PolynomialResultsTableShow(table);
+    printf("\nRoot is: %lf \n", *table->m_root);
     PolynomialResultsTableDelete(table);
   }
   
