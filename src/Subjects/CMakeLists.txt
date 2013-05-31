@@ -1,0 +1,4 @@
+project(subjects)
+
+add_subdirectory(LinearAlgebra)
+add_subdirectory(NumericalCalculations)

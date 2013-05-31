@@ -1,7 +1,7 @@
-#include "./LinearAlgebra/LinearSystem.h"
-#include "./MathBase/Polynomial.h"
-#include "./NumericalCalculations/PolynomialRoot.h"
-#include "./NumericalCalculations/PolynomialResults.h"
+#include "../src/Subjects/LinearAlgebra/LinearSystem.h"
+#include "../src/Core/MathBase/Polynomial.h"
+#include "../src/Subjects/NumericalCalculations/PolynomialRoot.h"
+#include "../src/Subjects/NumericalCalculations/PolynomialResults.h"
 
 /* this method main is only for test
  * 

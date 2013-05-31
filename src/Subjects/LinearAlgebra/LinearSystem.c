@@ -94,7 +94,6 @@ void LinearSystemSetIndependentTermsVector(LinearSystem* linearSystem, ...)
   return;
 }
 
-
 void LinearSystemGaussJordan(LinearSystem* linearSystem)
 {
   if (linearSystem->m_solutionMatrix)
