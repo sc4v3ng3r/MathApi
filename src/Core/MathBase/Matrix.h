@@ -1,5 +1,5 @@
 #ifndef MATRIX_H
-#define MATTRIX_H
+#define MATRIX_H
 
 #include "defines.h"
 
@@ -15,6 +15,7 @@ typedef struct Matrix {
 Matrix * MatrixInit(const ulong rows, const ulong columns);
 void MatrixDelete(Matrix* matrix);
 void MatrixShow(const Matrix* matrix);
+void MatrixShowLines(const Matrix* matrix, const ulong totalLines);
 Matrix * MatrixCopy(const Matrix* matrix);
 void MatrixReset(Matrix* matrix);
 

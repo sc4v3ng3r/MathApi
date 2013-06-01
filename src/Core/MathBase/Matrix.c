@@ -4,8 +4,8 @@ Matrix* MatrixInit(const ulong rows, const ulong columns)
 { 
   ulong i;
   Matrix *data=0;
-  if(! (data = (Matrix*) malloc(1*sizeof(Matrix))) ){
-    printf("Memory alocation [Matrix*] failed in | DEBUG[INIT] %s= \n", strerror(errno));
+  if(! (data = (Matrix*) malloc(sizeof(Matrix))) ){
+    printf("Memory alocation [Matrix*] failed in | DEBUG[INIT] %s\n", strerror(errno));
     return NULL;
   }
   
@@ -73,7 +73,6 @@ void MatrixShow(const Matrix* matrix)
   ulong i,j;
   
   for(i=0; i< matrix->m_rows; i++){
-    printf("L %lu ",i);
     for(j=0; j< matrix->m_columns; j++)
       printf("%.10lf  ", matrix->m_data[i][j]);
     puts("");
@@ -81,3 +80,21 @@ void MatrixShow(const Matrix* matrix)
   puts("\n");
   return;
 }
+
+void MatrixShowLines(const Matrix* matrix, const ulong totalLines)
+{
+  ulong i,j;
+  
+  if (matrix->m_rows < totalLines)
+    MatrixShow(matrix);
+  
+  else {
+    for(i=0; i< totalLines; i++){
+      for(j=0; j< matrix->m_columns; j++)
+	printf("%.10lf  ", matrix->m_data[i][j]);
+      puts("");   
+    }
+  }
+  return;
+}
+

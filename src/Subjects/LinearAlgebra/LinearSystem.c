@@ -49,6 +49,7 @@ LinearSystem* LinearSystemInit(const Matrix* matrix, BOOL vectorIndependent)
 	linearSystem->m_systemMatrix->m_columns+=1;
     }
   }
+  
   linearSystem->m_ca = linearSystem->m_cv = 0;
   linearSystem->m_solutionMatrix = NULL;
   return linearSystem;
@@ -112,31 +113,31 @@ void LinearSystemGaussJordan(LinearSystem* linearSystem)
   return;
 }
 
-void LinearSystemJacobi(LinearSystem* linearSystem)
+InteractiveResultsTable* LinearSystemJacobi(const LinearSystem* linearSystem, const ulong interations,
+					   const double precision, const double* kick)
 {
-  int i,j,k; // loops counter
-  ulong iterator, columnCount, rowCount;
-  Matrix* results;
-  double* beginKick, errMin, data; // errMIn is presicion
+  ulong i,j,k; // contadores de loops
+  ulong columnCount, rowCount;
+  InteractiveResultsTable *results;
+  double *beginKick, data; // errMIn is presicion
+  
   columnCount = rowCount = 0;
   
-  if (linearSystem->m_systemMatrix->m_type) // if matrix is not square, bail out!
-    return;
+  if (linearSystem->m_systemMatrix->m_type!= SQUARE) // se for matriz retangular ... cai fora!
+    return NULL;
  
-   // Checar, pois nao funciona direito! WARNING
-  if ( !checkDiagonal(linearSystem->m_systemMatrix) ){
+  if (!checkDiagonal(linearSystem->m_systemMatrix) ){
     puts("\n\t\tImpossivel Calcular esse sistema!\n");
-    return;
+    return NULL;
   }
   
-  printf("Quantidade de iteracoes: ");
-  scanf("%d",&iterator);
-  
-  results = MatrixInit(iterator,linearSystem->m_systemMatrix->m_columns-1);
+  results = InteractiveResultsTableInit(interations,(linearSystem->m_systemMatrix->m_columns),TRUE);
    if (!results){
     printf("Error in JACOBI() results malloc [DEBUG] %s\n", strerror(errno));
     return;
   }
+  
+  results->m_precsion = precision;
   
   beginKick = (double*) malloc(linearSystem->m_systemMatrix->m_rows*sizeof(double));
   if (!beginKick){
@@ -144,171 +145,122 @@ void LinearSystemJacobi(LinearSystem* linearSystem)
     return;
   }
   
-  printf("\nTolerancia: ");
-  scanf("%lf", &errMin);
-  
-  CLEAR_SCREEN
-  
-  for(i=0; i<linearSystem->m_systemMatrix->m_rows; i++){
-    printf("Valor Inicial X[%d]: ",i);
-    scanf("%lf", &beginKick[i]);
-    CLEAR_SCREEN
-  }
+  for(i=0; i < linearSystem->m_systemMatrix->m_rows; i++)
+    beginKick[i] = kick[i];
   
    rowCount=0;
-   
-   for(k=0; k < iterator; k++){ // Loop de iteracoes
+   for(k=0; k < interations; k++){ // Loop de iteracoes
+    results->m_total+=1;
     columnCount=0;
     
     for(i=0; i<linearSystem->m_systemMatrix->m_rows;i++){ // percorre as linhas (equacoes)
       double sum = linearSystem->m_systemMatrix->m_data[i][linearSystem->m_systemMatrix->m_columns-1]; // obtenho o termo independente
       
+//       printf("Termo independente Linha %lu : %lf\n", i, sum);
       for(j=0;j<linearSystem->m_systemMatrix->m_columns;j++){ // percorre as colunas [LOOP DE SOMATORIO!]
 	if(j==i)
 	  continue;
-	sum+= ( linearSystem->m_systemMatrix->m_data[i][j]*-1 ) * beginKick[j];
+	sum+= ( linearSystem->m_systemMatrix->m_data[i][j]* -1 ) * beginKick[j];
       }
-      
-	results->m_data[rowCount][columnCount] = sum/linearSystem->m_systemMatrix->m_data[i][i];
-	columnCount+=1;
+//       printf("Fazendo %lf / %lf\n", sum,linearSystem->m_systemMatrix->m_data[i][i]);
+      results->m_results->m_data[rowCount][columnCount] = sum/linearSystem->m_systemMatrix->m_data[i][i];
+      columnCount+=1;
     }
     
-    findError(rowCount,columnCount-1,results, beginKick); // encontra o erro, e ja coloca na matriz!
+    findError(rowCount,columnCount-1,results->m_results, beginKick); // encontra o erro, e ja coloca na matriz!
     
     // atualizando os valores que serao utilizados na proxima iteracao!
     for(i=0; i < linearSystem->m_systemMatrix->m_rows;i++)
-	beginKick[i] = results->m_data[rowCount][i];
+	beginKick[i] = results->m_results->m_data[rowCount][i];
     
     // verificar a convergencia! e caso seja < que a tolerancia, sair do loop
      // colocando os novos valores para serem utilizados na proxima iteracao
+    data = results->m_results->m_data[rowCount][(linearSystem->m_systemMatrix->m_columns-1)];
     
-     data = results->m_data[rowCount][(results->m_columns-1)];
-     
-     printf("%.10f < %.10f \n", data,errMin);
-     
-     if ( data < errMin ){
-       printf("Solucao encontrada!\n");
-       break;
-     }
-      rowCount+=1;
+    if (data < precision)
+      break;
+      
+     rowCount+=1;
    }//final do loop de iteracoes  
    
-    CLEAR_SCREEN
-    printf("Resultados das iteracoes:\n");
-    
-    //showMatrix(results);
-    rowCount == iterator ? rowCount-=1, k-=1 : rowCount;
-    printf("Solucao: ");
-    
-    for(i=0; i < results->m_columns-1; i++){
-      printf("X[%d] = %.10f ", i, results->m_data[rowCount][i]);
-    } 
-    printf("Erro: %.10f\n Total de iteracoes: %d|\n", results->m_data[rowCount][i], k+1);
-    (results->m_data[rowCount][i] < errMin) ? puts("Convergiu!") : puts("Nao convergiu!");
-  
-  MatrixDelete(results);
   free(beginKick);
-  printf("Tolerancia %.10f\n", errMin);
-  return;
+  results->m_operation = JACOBI;
+  return results;
 }
 
-void LinearSystemGaussSeidel(LinearSystem* linearSystem)
+InteractiveResultsTable *LinearSystemGaussSeidel(const LinearSystem* linearSystem, const ulong interations,
+						const double precision, const double* kick)
 {
   ulong i,j,k; // contadores de loops
-  ulong iterator, columnCount, rowCount;
-  Matrix* results;
-  double* beginKick, *kickBackup, errMin, data; // errMIn is presicion
+  ulong columnCount, rowCount;
+  InteractiveResultsTable* results;
+  double* beginKick, *kickBackup, data; // errMIn is presicion
   
   columnCount = rowCount = 0;// talvez nao necessario!
   
-  if (linearSystem->m_systemMatrix->m_type) // se for matriz retangular ... cai fora!
-    return;
+  if (!linearSystem)
+    return NULL;
+  
+  if (linearSystem->m_systemMatrix->m_type!= SQUARE) // se for matriz retangular ... cai fora!
+    return NULL;
  
    // Checar, pois nao funciona direito! WARNING
   if ( !checkDiagonal(linearSystem->m_systemMatrix) ){ // VAI MUDAR PARA O CRITERIO DE CONVERGENCIA
     puts("\n\t\tImpossivel Calcular esse sistema!\n");
-    return;
+    return NULL;
   }
   
-  printf("Quantidade de iteracoes: ");
-  scanf("%d",&iterator);
-  
-  results = MatrixInit(iterator,linearSystem->m_systemMatrix->m_columns-1);
+  results = InteractiveResultsTableInit(interations,linearSystem->m_systemMatrix->m_columns,TRUE);
+  if (!results){
+    printf("InteractiveResultsTable LinearSystemGaussSeidel ERROR %s\n", strerror(errno));
+    return NULL;
+  }
   
   beginKick = (double*) malloc(linearSystem->m_systemMatrix->m_rows*sizeof(double));
+  
+  for(i=0; i < linearSystem->m_systemMatrix->m_rows; i++)
+    beginKick[i] = kick[i];
+  
   kickBackup = (double*) malloc(linearSystem->m_systemMatrix->m_rows*sizeof(double));
-  printf("\nTolerancia: ");
-  scanf("%lf", &errMin);
   
-  CLEAR_SCREEN
-  
-  // entrada para o chute inicial
-  for(i=0; i<linearSystem->m_systemMatrix->m_rows; i++){
-    printf("Valor Inicial X[%d]: ",i);
-    scanf("%lf", &beginKick[i]);
+  for(i=0; i<linearSystem->m_systemMatrix->m_rows; i++)
     kickBackup[i] = beginKick[i];
-    CLEAR_SCREEN
-  }
   
-   rowCount=0;
-   
-   for(k=0; k < iterator; k++){ // Loop de iteracoes
+  rowCount=0;
+  results->m_operation = GAUSS_SEIDEL;
+  results->m_precsion = precision;
+  
+  for(k=0; k < interations; k++){ // Loop de iteracoes
     columnCount=0;
-    
+    results->m_total+=1;
     for(i=0; i<linearSystem->m_systemMatrix->m_rows;i++){ // percorre as linhas (equacoes)
       double sum = linearSystem->m_systemMatrix->m_data[i][linearSystem->m_systemMatrix->m_columns-1]; // obtenho o termo independente
-      
-      for(j=0;j<linearSystem->m_systemMatrix->m_columns;j++){ // percorre as colunas [LOOP DE SOMATORIO!]
+      for(j=0;j<linearSystem->m_systemMatrix->m_columns;j++){ // percorre as colunas [LOOP DE SOMATORIO!
 	if(j==i)
 	  continue;
 	sum+= ( linearSystem->m_systemMatrix->m_data[i][j]*-1 ) *kickBackup[j];
       }
-	kickBackup[i] = sum/linearSystem->m_systemMatrix->m_data[i][i];
-	results->m_data[rowCount][columnCount] = kickBackup[i];
-	// colocando os valores encontrados para a proxima iteracao... :)
-	columnCount+=1;
+      kickBackup[i] = sum/linearSystem->m_systemMatrix->m_data[i][i];
+      results->m_results->m_data[rowCount][columnCount] = kickBackup[i];
+      columnCount+=1;
     }
     
-    findError(rowCount,columnCount-1,results, beginKick); // encontra o erro, e ja coloca na matriz!
+    findError(rowCount,columnCount-1,results->m_results, beginKick); // encontra o erro, e ja coloca na matriz!
     
-    // atualizando os valores que serao utilizados na proxima iteracao!
-    // so pra garantir!
     for(i=0; i < linearSystem->m_systemMatrix->m_rows;i++)
-	beginKick[i] = kickBackup[i];
+      beginKick[i] = kickBackup[i];
     
     // verificar a convergencia! e caso seja < que a tolerancia, sair do loop
      // colocando os novos valores para serem utilizados na proxima iteracao
-    
-     data = results->m_data[rowCount][(results->m_columns-1)];
-     
-//      printf("%.10f < %.10f \n", data, errMin);
-     
-     if ( data < errMin ){
-       printf("Solucao encontrada!\n");
-       break;
-     }
-      rowCount+=1;
-   }//final do loop de iteracoes  
+    data = results->m_results->m_data[rowCount][(results->m_results->m_columns-1)];
+    if ( data < precision )
+      break;
+    rowCount+=1;
+   }//final do loop de iteracoes
    
-    CLEAR_SCREEN
-    printf("Resultados das iteracoes:\n");
-    
-//     showMatrix(results);
-    rowCount == iterator ? rowCount-=1, k-=1: rowCount;
-    printf("Solucao: ");
-    
-    for(i=0; i < results->m_columns-1; i++){
-      printf("X[%d] = %.10f ", i, results->m_data[rowCount][i]);
-    } 
-    printf("Erro: %.10f\n Total de iteracoes: %d|\n", results->m_data[rowCount][i], k+1);
-    (results->m_data[rowCount][i] < errMin) ? puts("Convergiu!") : puts("Nao convergiu!");
-  
-  MatrixDelete(results);
-  free(beginKick);
-  free(kickBackup);
-  
-  printf("Tolerancia %.10f\n", errMin);
-  return;
+   free(beginKick);
+   free(kickBackup);
+   return results;
 }
 
 // trocar de linha vai ter de verificar se foi possivel trocar, e retornar verdadeiro se sim, ou false se nao!
@@ -317,7 +269,6 @@ static void trocarLinha(const ulong a, const ulong b, Matrix* matrix)
   unsigned long i;
   double *backup = (double*) malloc(matrix->m_columns* sizeof(double));
   
-  //printf("Trocando |L%d = L%d|\n",a,b);
   for(i=0; i < matrix->m_columns; i++){
     backup[i] = matrix->m_data[a][i];
     matrix->m_data[a][i] = matrix->m_data[b][i];
@@ -326,31 +277,27 @@ static void trocarLinha(const ulong a, const ulong b, Matrix* matrix)
   for(i=0; i < matrix->m_columns; i++)
     matrix->m_data[b][i] = backup[i];
   
-  //showMatrix(matrix); // only Debug
   free(backup);
   backup = NULL;
   return;
 }
 static int transformarEmUm(const ulong line, double k, Matrix* matrix)
 {
-  unsigned long j;
+  ulong j;
   if (!k)
     return FALSE;
-  
- // printf("L%lu = L%lu/ %lf\n",line,line, k);
   
   for(j=0; j < matrix->m_columns; j++){
     matrix->m_data[line][j]/=k;
      if (matrix->m_data[line][j] == (-0) )
       matrix->m_data[line][j]=0;
   }
- // showMatrix(matrix); // only Debug
   return TRUE;
 }
 // linha onde vai comecar a zerar, linha pivo, constante, e a matriz
 static int transformarEmZero(const ulong line, const ulong pivotRow, /*const int column,*/ double k, Matrix* matrix)
 {
-  unsigned long i;
+  ulong i;
   double data;
   
   if (!k)
@@ -364,9 +311,6 @@ static int transformarEmZero(const ulong line, const ulong pivotRow, /*const int
     if (matrix->m_data[line][i] == (-0) )
       matrix->m_data[line][i]=0;
   }
-   
-//   puts("Colocando MAtriz e saindo");
-  //showMatrix(matrix); // only Debug
   return TRUE;
 }
 
@@ -486,20 +430,13 @@ static void findError(const ulong line, const ulong column, Matrix* matrix, doub
     if (erros[i] < 0)
       erros[i]*=-1;
   }
-  
-  for(i=0; i < matrix->m_columns-1;i++)
-    printf("Os erros encontrados foram %.10f\n",erros[i]);
-  
-  puts("\n\n");
-  
   // encontrando o maior erro! pra armazenar na matriz!
   data = erros[0];
   for(i=1; i < matrix->m_columns-1; i++){
-    if (data < erros[i]){
+    if (data < erros[i])
       data = erros[i];
-      printf("O maior erro encontrado foi %.10f\n", data);
-    }
   }
+  
   matrix->m_data[line][column+1] = data;
   free(erros);
   return;

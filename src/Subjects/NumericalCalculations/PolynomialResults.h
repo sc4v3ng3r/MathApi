@@ -5,7 +5,7 @@
 #include "../../Core/MathBase/OrderedPair.h"
 #include "../../Core/ResultsTables/ResultsTable.h"
 
-typedef struct PolynomialResultsTable {
+typedef struct PolynomialResultsTable{
   ulong m_total, m_size;
   ResultsTable * m_results;
   ResultsTable * m_runner;
