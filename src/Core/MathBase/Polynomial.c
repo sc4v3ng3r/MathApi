@@ -63,13 +63,13 @@ void PolynomialShow(const Polynomial* pol)
 {
   ulong i;
   
-  printf("Polynomial degree %lu\n", pol->m_degree);
+  //printf("Polynomial degree %lu\n", pol->m_degree);
   
   for(i=0; i < pol->m_degree; i++){
-    if (i)
-      (pol->m_data[i] > 0) ? printf("+") : 0;
-    
-    printf(" %lf^%d ", pol->m_data[i], pol->m_degree-i);
+    if (i){
+      (pol->m_data[i] >= 0) ? printf("+") : 0;
+    } else if (pol->m_data[i] < 0) printf("-");
+    printf(" %lfx^%d ", pol->m_data[i], pol->m_degree-i);
   }
 
   (pol->m_data[i] > 0) ? printf("+") : 0;

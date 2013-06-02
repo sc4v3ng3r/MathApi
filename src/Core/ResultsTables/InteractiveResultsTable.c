@@ -29,21 +29,13 @@ InteractiveResultsTable* InteractiveResultsTableCopy(const InteractiveResultsTab
 void InteractiveResultsTableShow(const InteractiveResultsTable* table)
 {
   ulong i;
- // Maybe here this switch is not nedded
-  switch(table->m_operation){
-    case GAUSS_SEIDEL:
-    case JACOBI:
-      for(i=0; i < table->m_results->m_columns-1; i++)
-	printf("     X%lu \t", i);
+  puts("");
+  for(i=0; i < table->m_results->m_columns-1; i++)
+    printf("     X%lu \t", i);
   
-      printf("  E\n");
-      MatrixShowLines(table->m_results, table->m_total);
-      printf("\n Precision: %lf\n", table->m_precsion);
-      break;
-      
-    default:
-      break;
-  }
+  printf("  E\n");
+  MatrixShowLines(table->m_results, table->m_total);
+  printf("\n Precision: %lf\n", table->m_precsion);
   return;
 }
 

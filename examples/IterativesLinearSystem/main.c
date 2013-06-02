@@ -1,7 +1,7 @@
 //#include "../../src/MathBase/Matrix.h"
 #include "../../src/Core/ResultsTables/InteractiveResultsTable.h"
 #include "../../src/Subjects/LinearAlgebra/LinearSystem.h"
-
+#include "../../src/Core/MathBase/Polynomial.h"
 int main(){
   
   Matrix *matrix = MatrixInit(2,3);
@@ -16,8 +16,7 @@ int main(){
   matrix->m_data[1][1] = 2;
   matrix->m_data[1][2] = 3;
   
-  
-  LinearSystem *linearSystem = LinearSystemInit(matrix,1);
+  LinearSystem *linearSystem = LinearSystemInit(matrix,TRUE);
   MatrixShow(linearSystem->m_systemMatrix);
   
   InteractiveResultsTable* table = LinearSystemJacobi(linearSystem,10,0.01, data);
@@ -26,15 +25,14 @@ int main(){
     InteractiveResultsTableShow(table);
     InteractiveResultsTableDelete(table);
   }
-  printf("\n Now the same linear system with Gauus Seidel method");
+  
+  printf("\n Now the same linear system with Gauss Seidel method");
   
   table = LinearSystemGaussSeidel(linearSystem,10,0.01,data);
-  if (!table){
-    puts("Fuck");
+  if (table){
+    InteractiveResultsTableShow(table);
+    InteractiveResultsTableDelete(table);
   }
-    
-  InteractiveResultsTableShow(table);
-  InteractiveResultsTableDelete(table);
   
   LinearSystemDelete(linearSystem);
   MatrixDelete(matrix);
